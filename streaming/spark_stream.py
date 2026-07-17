@@ -1,6 +1,7 @@
 from pyspark.sql import SparkSession
 
 from configs.config import *
+from transformations.bronze import apply_bronze_transformations
 
 
 def create_spark_session():
@@ -18,7 +19,6 @@ def create_spark_session():
             "4"
         )
 
-        # Kafka Connector (Spark 3.5.8)
         .config(
             "spark.jars.packages",
             "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.8"
@@ -34,7 +34,7 @@ def create_spark_session():
 
 def read_kafka_stream(spark):
     """
-    Read Clickstream Events from Kafka.
+    Read Kafka Stream.
     """
 
     df = (
@@ -50,7 +50,7 @@ def read_kafka_stream(spark):
         )
         .option(
             "startingOffsets",
-            "earliest"
+            "latest"
         )
         .load()
     )
@@ -64,13 +64,25 @@ if __name__ == "__main__":
 
     kafka_df = read_kafka_stream(spark)
 
+    bronze_df = apply_bronze_transformations(kafka_df)
+
     query = (
-        kafka_df
-        .selectExpr("CAST(value AS STRING)")
-        .writeStream
-        .format("console")
+        bronze_df.writeStream
+        .format("parquet")
         .outputMode("append")
-        .option("truncate", False)
+
+        .option(
+            "path",
+            "data/bronze"
+        )
+
+        .option(
+            "checkpointLocation",
+            "checkpoints/bronze"
+        )
+
+        .partitionBy("event_date")
+
         .start()
     )
 
