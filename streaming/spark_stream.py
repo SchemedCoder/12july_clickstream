@@ -6,7 +6,7 @@ from transformations.bronze import apply_bronze_transformations
 
 def create_spark_session():
     """
-    Create Spark Session.
+    Create Spark Session with Kafka + Delta Lake support.
     """
 
     spark = (
@@ -21,7 +21,19 @@ def create_spark_session():
 
         .config(
             "spark.jars.packages",
-            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.8"
+            ",".join([
+                "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.8",
+                "io.delta:delta-spark_2.12:3.2.0"
+            ])
+        )
+        .config(
+            "spark.sql.extensions",
+            "io.delta.sql.DeltaSparkSessionExtension"
+        )
+
+        .config(
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.delta.catalog.DeltaCatalog"
         )
 
         .getOrCreate()
@@ -68,7 +80,7 @@ if __name__ == "__main__":
 
     query = (
         bronze_df.writeStream
-        .format("parquet")
+        .format("delta")
         .outputMode("append")
 
         .option(
