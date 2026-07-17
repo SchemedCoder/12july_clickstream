@@ -84,14 +84,14 @@ if __name__ == "__main__":
         .outputMode("append")
 
         .option(
-            "path",
-            "data/bronze"
-        )
+    "path",
+    BRONZE_PATH
+)
 
-        .option(
-            "checkpointLocation",
-            "checkpoints/bronze"
-        )
+.option(
+    "checkpointLocation",
+    CHECKPOINT_BRONZE
+)
 
         .partitionBy("event_date")
 
