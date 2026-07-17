@@ -26,6 +26,7 @@ def create_spark_session():
                 "io.delta:delta-spark_2.12:3.2.0"
             ])
         )
+
         .config(
             "spark.sql.extensions",
             "io.delta.sql.DeltaSparkSessionExtension"
@@ -82,19 +83,15 @@ if __name__ == "__main__":
         bronze_df.writeStream
         .format("delta")
         .outputMode("append")
-
         .option(
-    "path",
-    BRONZE_PATH
-)
-
-.option(
-    "checkpointLocation",
-    CHECKPOINT_BRONZE
-)
-
+            "path",
+            BRONZE_PATH
+        )
+        .option(
+            "checkpointLocation",
+            CHECKPOINT_BRONZE
+        )
         .partitionBy("event_date")
-
         .start()
     )
 
